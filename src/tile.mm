@@ -1,147 +1,15 @@
 
-// clang++ -framework Carbon -framework Cocoa -std=c++14 -Wall -O2 -o tile tile.mm
+#include "apple_api.h"
+#include "ArgParser.h"
+#include "Config.h"
 
-#include "tile.h"
+#import <Foundation/Foundation.h>
 
-#import <Carbon/Carbon.h>
-#import <Cocoa/Cocoa.h>
+#include <iostream>
+#include <cstdlib>
 
-std::pair<WindowList, DisplayList> build_lists(bool front_only = false)
-{
-    WindowList  window_list;
-    DisplayList display_list;
-
-    NSArray *window_arr = (NSArray *)CGWindowListCopyWindowInfo(
-        kCGWindowListOptionOnScreenOnly, kCGNullWindowID);
-    
-    bool got_first(false);
-
-    for (NSDictionary *window in window_arr)
-    {
-        const char *str = [window[(id)kCGWindowOwnerName] UTF8String];
-        STR owner(str != nullptr ? str : "");
-        
-        str = [window[(id)kCGWindowName] UTF8String];
-        STR title(str != nullptr ? str : "");
-
-        if (owner == "Dock") continue;
-        if (owner == "Finder" && title.empty() == true) continue;
-        
-        bool is_display = (owner == "Window Server" && title == "Desktop");
-        unsigned int pid = [window[(id)kCGWindowOwnerPID] unsignedIntValue];
-        
-        if (is_display == false)
-        {
-            if (front_only == true && got_first == true)
-                continue;
-            
-            // skip Menu Bar and icons on it (they don't support AXUIElement)
-            AXUIElementRef app = AXUIElementCreateApplication(pid);
-            AXUIElementRef frontMostWindow;
-            AXError err = AXUIElementCopyAttributeValue(
-                app, kAXFocusedWindowAttribute, (CFTypeRef *)&frontMostWindow);
-            CFRelease(app);
-            if (err != kAXErrorSuccess)
-                continue;
-        }
-
-        CGRect rect;
-        CGRectMakeWithDictionaryRepresentation(
-            (CFDictionaryRef)window[(id)kCGWindowBounds], &rect);
-
-        Bounds bounds{(int)rect.origin.x, (int)rect.origin.y,
-                      (int)rect.size.width, (int)rect.size.height};
-
-        if (is_display == false)
-        {
-            Window window{bounds, std::move(title), pid};
-            window_list.add_window(owner, std::move(window));
-            got_first = true;
-        }
-        else
-        {
-            display_list.add_display(bounds);
-        }
-    }
-
-    if (window_arr.count > 0)
-        CFRelease(window_arr);
-
-    return std::make_pair(window_list, display_list); // RVO
-}
-
-bool apply_bounds(const Window &window, Bounds bounds) // does not alter window
-{
-    bool success(false);
-
-    AXUIElementRef app = AXUIElementCreateApplication(window.pid);
-
-    NSArray *window_arr;
-    AXUIElementCopyAttributeValues( // 1024 is maximum # of elements
-        app, kAXWindowsAttribute, 0, 1024, (CFArrayRef *) &window_arr);
-    CFRelease(app);
-
-    // find AXUIElement with matching origin, size, title 
-    // (this is the only known way of getting Accessibility API's
-    //  window objects from pid/kCGWindowNumber within the documented API)
-    for (id element in window_arr)
-    {
-        AXUIElementRef w = (__bridge AXUIElementRef)element;
-        AXValueRef v;
-
-        CGPoint origin;
-        AXUIElementCopyAttributeValue(w, kAXPositionAttribute, (CFTypeRef*)&v);
-        AXValueGetValue(v, (AXValueType)kAXValueCGPointType, &origin);
-        CFRelease(v);
-
-        if ((int)origin.x != window.bounds.x ||
-            (int)origin.y != window.bounds.y)
-            continue;
-
-        CGSize size;
-        AXUIElementCopyAttributeValue(w, kAXSizeAttribute, (CFTypeRef*)&v);
-        AXValueGetValue(v, (AXValueType)kAXValueCGSizeType, &size);
-        CFRelease(v);
-
-        if ((int)size.width  != window.bounds.w ||
-            (int)size.height != window.bounds.h)
-            continue;
-        
-        AXUIElementCopyAttributeValue(w, kAXTitleAttribute, (CFTypeRef*)&v);
-        const char * title_c_str = [(__bridge NSString *)v UTF8String];
-        STR title(title_c_str != NULL ? title_c_str : "");
-        CFRelease(v);
-
-        if (title != window.title)
-            continue;
-
-        if (window.bounds.x != bounds.x || window.bounds.y != bounds.y)
-        {
-            origin.x = (CGFloat)bounds.x;
-            origin.y = (CGFloat)bounds.y;
-            v = AXValueCreate((AXValueType)kAXValueCGPointType, &origin);
-            AXUIElementSetAttributeValue(w, kAXPositionAttribute, v);
-            CFRelease(v);
-        }
-
-        if (window.bounds.w != bounds.w || window.bounds.h != bounds.h)
-        {
-            size.width  = (CGFloat)bounds.w;
-            size.height = (CGFloat)bounds.h;
-            v = AXValueCreate((AXValueType)kAXValueCGSizeType, &size);
-            AXUIElementSetAttributeValue(w, kAXSizeAttribute, v);
-            CFRelease(v);
-        }
-
-        success = true;
-        break;
-    }
-
-    if (window_arr.count > 0)
-        CFRelease(window_arr);
-    
-    return success;
-}
+// take this out when stuff moved
+#include <cmath>
 
 int main(int argc, const char *argv[])
 {
@@ -152,9 +20,7 @@ int main(int argc, const char *argv[])
         return exit_code;
     };
 
-    // obtain access to Accessibility API if not available
-    NSDictionary *options = @{(id)kAXTrustedCheckOptionPrompt: @YES};
-    if (false == AXIsProcessTrustedWithOptions((CFDictionaryRef)options))
+    if (false == apple_api::enable_accessibility_api())
         return clean_exit(1);
     
     ArgParser arg_parser;
@@ -174,7 +40,7 @@ int main(int argc, const char *argv[])
 
     if (args.action == ArgParser::action::list)
     {
-        if (false == build_lists().first.print(args.substr))
+        if (false == apple_api::build_lists().first.print(args.substr))
         {
             std::cerr << "Cannot find unique app name starting with '"
                       << args.substr << "'\n";
@@ -218,13 +84,16 @@ int main(int argc, const char *argv[])
         if (valid == true)
         {
             valid = false;
-            auto win_list = build_lists().first; // lifetime affects pair_ptr
+            auto win_list = apple_api::build_lists().first;
+
+            // note: win_list must outlive pair_ptr
             auto pair_ptr = win_list.find(std::get<0>(b));
+
             if (pair_ptr != nullptr &&
                 std::get<1>(b) < pair_ptr->second.size())
             {
                 const auto &win = pair_ptr->second[std::get<1>(b)];
-                valid = apply_bounds(win, 
+                valid = apple_api::apply_bounds(win, 
                     Bounds{std::get<2>(b), std::get<3>(b),
                            std::get<4>(b), std::get<5>(b)});
                 if (valid == true)
@@ -251,8 +120,11 @@ int main(int argc, const char *argv[])
 
     if (args.action == ArgParser::action::tile)
     {
-        auto win_disp = (args.substr.empty() == true ? build_lists(true) :
-                                                       build_lists());
+        auto win_disp = (args.substr.empty() == true
+                            ? apple_api::build_lists(true)
+                            : apple_api::build_lists());
+        
+        // note: win_disp must outlive pair_ptr
         auto pair_ptr = win_disp.first.find(args.substr);
         
         if (pair_ptr == nullptr)
@@ -340,7 +212,7 @@ int main(int argc, const char *argv[])
                 Bounds::sub(disp.y, disp.h, unit_height, begin, end);
         }
 
-        if (true == apply_bounds(win, bounds))
+        if (true == apple_api::apply_bounds(win, bounds))
         {
             config.set_last_bounds({pair_ptr->first, args.index,
                                     win.bounds.x, win.bounds.y,
