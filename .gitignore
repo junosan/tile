@@ -1,5 +1,4 @@
 # Ignore files specific to this project
-bin/
 etc/
 obj/
 tile

@@ -63,7 +63,6 @@ bool WindowList::print(CSR substr)
             auto i = 0u;
             for (const auto &window : owner_window.second)
                 std::cout << fmt_window(owner_window.first, i++, window);
-                // window.print(owner_window.first, i++);
         }
     }
     else // print specified app
@@ -74,7 +73,6 @@ bool WindowList::print(CSR substr)
             auto i = 0u;
             for (const auto &window : pair_ptr->second)
                 std::cout << fmt_window(pair_ptr->first, i++, window);
-                // window.print(pair_ptr->first, i++);
         }
         else
             return false;

@@ -87,7 +87,7 @@ std::pair<int, bool> TileConfig::get_unit_width()
     std::tie(val, valid) = get_value("unit_width");
     if (valid == false)
     {
-        val = STR("585"); // default value
+        val = STR("570"); // default value
         set_value("unit_width", val);
         valid = true;
     }

@@ -1,0 +1,39 @@
+# tile keybinds for khd
+
+# Note: when ctrl is pressed & mouse is inside Safari, it spawns
+#       a mini pop-up in the corner which interferes with tile;
+#       keep mouse out of Safari when manipulating it
+
+# horizontal tile presets
+cmd + lctrl - z : tile 0-1
+cmd + lctrl - x : tile 1-2
+cmd + lctrl - c : tile 2-3
+cmd + lctrl - v : tile 3-4
+
+cmd + lctrl - a : tile 0-2
+cmd + lctrl - s : tile 1-3
+cmd + lctrl - d : tile 2-4
+
+cmd + lctrl - q : tile 0-3
+cmd + lctrl - w : tile 1-4
+
+cmd + lctrl - 1 : tile 0-4
+
+cmd + lctrl - r : tile -
+
+# vertical tile presets
+cmd + lctrl - f : tile f
+cmd + lctrl - t : tile t
+cmd + lctrl - b : tile b
+cmd + lctrl - y : tile y
+cmd + lctrl - h : tile h
+cmd + lctrl - n : tile n
+cmd + lctrl - j : tile j
+cmd + lctrl - k : tile k
+
+# move between multiple displays
+cmd + lctrl - 0x21 : tile [
+cmd + lctrl - 0x1E : tile ]
+
+# undo
+cmd + lctrl - u : tile undo
