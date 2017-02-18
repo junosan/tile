@@ -113,11 +113,11 @@ std::pair<std::tuple<int, int, int, int>, bool> TileConfig::get_margins()
 
     STR val;
     bool valid;
-    std::tie(val, valid) = get_value("margin");
+    std::tie(val, valid) = get_value("margin_lrtb");
     if (valid == false)
     {
         val = STR("0 0 0 0"); // default value
-        set_value("margin", val);
+        set_value("margin_lrtb", val);
         valid = true;
     }
 

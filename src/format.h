@@ -7,10 +7,10 @@
 #include <iomanip>
 
 inline std::ostream& operator<<(std::ostream &os, const Bounds &b) {
-    return os << "origin(" << std::setw(5) << b.x << ","
-                           << std::setw(5) << b.y << ")"
-                 " size("  << std::setw(5) << b.w << ","
-                           << std::setw(5) << b.h << ")";
+    return os << "pos("   << std::setw(5) << b.x << ","
+                          << std::setw(5) << b.y << ")"
+                 " size(" << std::setw(5) << b.w << ","
+                          << std::setw(5) << b.h << ")";
 }
 
 

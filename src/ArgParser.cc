@@ -142,6 +142,54 @@ ArgParser::Args ArgParser::parse(int argc, const char *argv[])
 
 void ArgParser::print_usage()
 {
-    std::cout << "USAGE: tile [command] [app_name] [window_index]\n";
-    // add full later
+    std::cout << R"USAGE_TEXT(
+tile
+    equivalent to 'tile list'
+
+tile help
+    display this page
+
+tile undo
+    swap current_bounds & last_bounds
+
+tile list [app_name] ([ ]: optional)
+    [app_name]  - case insensitive substring (at index 0) of an app name
+                - if there are whitespaces, enclose app_name with '' or ""
+                - no-op if number of matches is not 1
+        (none)  list currently opened app names and their windows
+         name   list the named app's windows
+
+tile [command] [app_name] [window_index] (all positional arguments)
+    [command] = [h_cmd][v_cmd]
+                - dimensions specified are with respect to the display
+                  with the most overlap area with the chosen window
+        [h_cmd]     - nonnegative numbers, possibly decimal
+                    - no-op if $l >= $r
+            (none)          keep current horizontal position & width
+            $l              pos_x = $l unit, width = 1 unit
+            [$l]-[$r]
+                $l  (none)  pos_x = keep current 
+                    number  pos_x = number unit
+                $r  (none)  width extends to effective screen width
+                    number  width = (number unit) - pos_x
+        [v_cmd]       
+            (none)  keep current vertical position & height
+            f       full height
+            t/b     top half, bottom half
+            y/h/n   top third, middle third, bottom third
+            j/k     (bottom + middle)/(top + middle) thirds
+    [command] = [/] move to prev/next display
+    [app_name]
+        (none)      use the window with current focus
+         name       use the named app (same rules as app_name above)
+    [window_index]
+        (none)      equivalent to 0
+        number      enumerated index in 'tile list' or 'tile list app_name'
+
+$HOME/.tilerc
+    unit_width      nonnegative integer (default: 570)
+    margin_lrtb     integers for left, right, top, bottom (default: 0 0 0 0)
+    last_bounds     not intended for human editing
+)USAGE_TEXT" << '\n';
+
 }

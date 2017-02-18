@@ -24,7 +24,7 @@ Bounds DisplayList::target_display(Bounds window, std::ptrdiff_t idx_offset)
     
     // always valid if n > 0
     const auto it = std::max_element(std::begin(overlaps),
-                                        std::end(overlaps));
+                                     std::end(overlaps));
     
     // if overlap is all 0, idx = 0 (intended)
     auto idx = std::distance(std::begin(overlaps), it);
@@ -34,10 +34,10 @@ Bounds DisplayList::target_display(Bounds window, std::ptrdiff_t idx_offset)
     idx = (idx + idx_offset) % n; 
 
     Bounds bounds(displays[idx]);
-    bounds.x += std::get<0>(margins);
-    bounds.y += std::get<2>(margins);
-    bounds.w -= std::get<0>(margins) + std::get<1>(margins);
-    bounds.h -= std::get<2>(margins) + std::get<3>(margins);
+    bounds.x += std::get<0>(margins); // l
+    bounds.y += std::get<2>(margins); // t
+    bounds.w -= std::get<0>(margins) + std::get<1>(margins); // l + r
+    bounds.h -= std::get<2>(margins) + std::get<3>(margins); // t + b
 
     // r & b may not be respected if too large
     bounds.w = std::max(bounds.w, 1);

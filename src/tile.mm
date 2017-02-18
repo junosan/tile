@@ -8,9 +8,6 @@
 #include <iostream>
 #include <cstdlib>
 
-// take this out when stuff moved
-#include <cmath>
-
 int main(int argc, const char *argv[])
 {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -21,8 +18,12 @@ int main(int argc, const char *argv[])
     };
 
     if (false == apple_api::enable_accessibility_api())
+    {
+        std::cerr << "Accessibility API unavailable\n";
         return clean_exit(1);
+    }
     
+
     ArgParser arg_parser;
     auto args = arg_parser.parse(argc, argv);
 
@@ -85,9 +86,7 @@ int main(int argc, const char *argv[])
         {
             valid = false;
             auto win_list = apple_api::build_lists().first;
-
-            // note: win_list must outlive pair_ptr
-            auto pair_ptr = win_list.find(std::get<0>(b));
+            auto pair_ptr = win_list.find(std::get<0>(b)); // life ~ win_list
 
             if (pair_ptr != nullptr &&
                 std::get<1>(b) < pair_ptr->second.size())
@@ -112,121 +111,63 @@ int main(int argc, const char *argv[])
         return clean_exit(0);
     }
 
+
+    auto win_disp = (args.substr.empty() == true 
+                        ? apple_api::build_lists(true)
+                        : apple_api::build_lists());
+    win_disp.second.set_margins(margins);
+    
+    auto pair_ptr = win_disp.first.find(args.substr); // life ~ win_disp.first
+
+    if (pair_ptr == nullptr)
+    {
+        std::cerr << "Cannot find unique app name starting with '"
+                    << args.substr << "'\n";
+        return clean_exit(1);
+    }
+    
+    if (args.index >= pair_ptr->second.size())
+    {
+        std::cerr << "Invalid window index " << args.index << '\n';
+        return clean_exit(1);
+    }
+
+    const auto &win = pair_ptr->second[args.index];
+    Bounds bounds(win.bounds); // win.bounds (old) -> bounds (new)
+
     if (args.action == ArgParser::action::move)
     {
-        // to be implemented
-        return clean_exit(0);
+        Bounds cur_disp = win_disp.second.target_display(win.bounds);
+
+        std::ptrdiff_t offset(args.m_dir == ArgParser::m_dir::prev ? -1 : 1);
+        Bounds new_disp = win_disp.second.target_display(win.bounds, offset);
+        
+        // attempt to preserve relative origin
+        bounds.x += new_disp.x - cur_disp.x;
+        bounds.y += new_disp.y - cur_disp.y;
+
+        bounds = new_disp.fit(bounds);
     }
 
     if (args.action == ArgParser::action::tile)
     {
-        auto win_disp = (args.substr.empty() == true
-                            ? apple_api::build_lists(true)
-                            : apple_api::build_lists());
-        
-        // note: win_disp must outlive pair_ptr
-        auto pair_ptr = win_disp.first.find(args.substr);
-        
-        if (pair_ptr == nullptr)
-        {
-            std::cerr << "Cannot find unique app name starting with '"
-                      << args.substr << "'\n";
-            return clean_exit(1);
-        }
-        
-        if (args.index >= pair_ptr->second.size())
-        {
-            std::cerr << "Invalid window index " << args.index << '\n';
-            return clean_exit(1);
-        }
-
-        const auto &win = pair_ptr->second[args.index];
-
-        win_disp.second.set_margins(margins);
         Bounds disp = win_disp.second.target_display(win.bounds);
         
-        Bounds bounds(win.bounds); // win.bounds (old), bounds (new)
+        bounds = disp.h_sub(bounds, unit_width, args.h_cmd.l, args.h_cmd.r);
+        bounds = disp.v_sub(bounds, args.v_cmd);
+    }
 
-        // see comments in ArgParser::Args
-        if (args.h_cmd.l != args.h_cmd.r || args.h_cmd.r < 0.f)
-        {
-            int rel_orig = std::min(disp.w,
-                (args.h_cmd.l >= 0.f
-                    ? static_cast<int>(std::round(args.h_cmd.l * unit_width))
-                    : bounds.x - disp.x));
-            int rel_term = std::min(disp.w,
-                (args.h_cmd.r >= 0.f
-                    ? static_cast<int>(std::round(args.h_cmd.r * unit_width))
-                    : disp.w));
-            rel_orig = std::min(rel_orig, rel_term - 1);
-
-            bounds.x = disp.x + rel_orig;
-            bounds.w = rel_term - rel_orig;
-        }
-
-        if (args.v_cmd != ArgParser::v_cmd::none)
-        {
-            float unit_height;
-            switch (args.v_cmd)
-            {
-                case ArgParser::v_cmd::f: unit_height = disp.h; break;
-                case ArgParser::v_cmd::t:
-                case ArgParser::v_cmd::b: unit_height = disp.h / 2.f; break;
-                case ArgParser::v_cmd::y:
-                case ArgParser::v_cmd::h:
-                case ArgParser::v_cmd::n:
-                case ArgParser::v_cmd::j:
-                case ArgParser::v_cmd::k: unit_height = disp.h / 3.f; break;
-                default: verify(false);
-            }
-
-            float begin;
-            switch (args.v_cmd)
-            {
-                case ArgParser::v_cmd::f:
-                case ArgParser::v_cmd::t:
-                case ArgParser::v_cmd::y:
-                case ArgParser::v_cmd::k: begin = 0.f; break;
-                case ArgParser::v_cmd::b:
-                case ArgParser::v_cmd::h:
-                case ArgParser::v_cmd::j: begin = 1.f; break;
-                case ArgParser::v_cmd::n: begin = 2.f; break;
-                default: verify(false);
-            }
-
-            float end;
-            switch (args.v_cmd)
-            {
-                case ArgParser::v_cmd::f:
-                case ArgParser::v_cmd::t:
-                case ArgParser::v_cmd::y: end = 1.f; break;
-                case ArgParser::v_cmd::b:
-                case ArgParser::v_cmd::h:
-                case ArgParser::v_cmd::k: end = 2.f; break;
-                case ArgParser::v_cmd::n:
-                case ArgParser::v_cmd::j: end = 3.f; break;
-                default: verify(false);
-            }
-
-            std::tie(bounds.y, bounds.h) = 
-                Bounds::sub(disp.y, disp.h, unit_height, begin, end);
-        }
-
-        if (true == apple_api::apply_bounds(win, bounds))
-        {
-            config.set_last_bounds({pair_ptr->first, args.index,
-                                    win.bounds.x, win.bounds.y,
-                                    win.bounds.w, win.bounds.h});
-        }
-        else
-        {
-            std::cerr << "Window moved or disappeared while trying to tile\n";
-            return clean_exit(1);
-        }
-
-        return clean_exit(0);
+    if (true == apple_api::apply_bounds(win, bounds))
+    {
+        config.set_last_bounds({pair_ptr->first, args.index,
+                                win.bounds.x, win.bounds.y,
+                                win.bounds.w, win.bounds.h});
+    }
+    else
+    {
+        std::cerr << "Window moved or disappeared while trying to tile\n";
+        return clean_exit(1);
     }
 
     return clean_exit(0);
 }
-
