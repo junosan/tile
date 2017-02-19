@@ -15,17 +15,14 @@ inline std::ostream& operator<<(std::ostream &os, const Bounds &b)
 }
 
 struct fmt_window {
-    const char *owner;
-    std::size_t index;
     const Window *window;
-    fmt_window(CSR owner, std::size_t index, const Window &window)
-        : owner(owner.c_str()), index(index), window(&window) {}
+    fmt_window(const Window &window) : window(&window) {}
 };
 
 // 24 + 5 + 50 = 79
 inline std::ostream& operator<<(std::ostream &os, const fmt_window &in) {
-    return os << std::setw(24) << STR(in.owner).substr(0, 24)
-        << " " << in.index << " : "
+    return os << std::setw(24) << in.window->owner.substr(0, 24)
+        << " " << in.window->index << " : "
         << std::left << std::setw(50) << in.window->title.substr(0, 50)
         << std::right << '\n'
         << std::setw(24) << "" << "     " << in.window->bounds << '\n' ;

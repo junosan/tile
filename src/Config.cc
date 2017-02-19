@@ -130,61 +130,86 @@ std::pair<std::tuple<int, int, int, int>, bool> TileConfig::get_margins()
     return std::make_pair(m, valid);
 }
 
-std::pair<std::tuple<STR, int, int, int, int, int>, bool> 
-    TileConfig::get_last_bounds()
+bool TileConfig::set_last_bounds(const std::vector<Window> &windows)
 {
     verify(filename.empty() == false);
 
-    //        name  idx   x    y    w    h
-    std::tuple<STR, int, int, int, int, int> b{"", 0, 0, 0, 0, 0};
+    STR val;
+    bool valid(true);
 
+    for (const auto &win : windows)
+    {
+        if (win.bounds.w <= 0 || win.bounds.h <= 0)
+        {
+            valid = false;
+            break;
+        }
+
+        val += win.owner + '\037' + std::to_string(win.index) + '\037'
+                + std::to_string(win.bounds.x) + '\037' 
+                + std::to_string(win.bounds.y) + '\037'
+                + std::to_string(win.bounds.w) + '\037'
+                + std::to_string(win.bounds.h) + '\036';
+    }
+
+    if (val.empty() == true)
+        valid = false;
+    else
+        val.pop_back();
+
+    if (valid == true)
+        valid = set_value("last_bounds", val);
+
+    return valid;
+}
+
+std::pair<std::vector<Window>, bool> TileConfig::get_last_bounds()
+{
+    verify(filename.empty() == false);
+
+    std::vector<Window> windows;
+    
     STR val;
     bool valid;
     std::tie(val, valid) = get_value("last_bounds");
     if (valid == true)
     {
-        if (std::count(std::begin(val), std::end(val), '\037') == 5)
+        std::stringstream ss(val);
+        for (STR rec; std::getline(ss, rec, '\036');)
         {
-            auto first = val.find_first_of('\037');
-            std::get<0>(b) = val.substr(0, first);
+            if (std::count(std::begin(rec), std::end(rec), '\037') == 5)
+            {
+                Window win;
 
-            std::transform(std::begin(val) + first, std::end(val),
-                std::begin(val) + first,
-                [](char c){ return (c != '\037' ? c : ' '); });
-            
-            std::stringstream ss(val.substr(first));
-            ss >> std::get<1>(b) >> std::get<2>(b) >> std::get<3>(b)
-                >> std::get<4>(b) >> std::get<5>(b);
-            if (ss.fail() == true)
+                auto first = rec.find_first_of('\037');
+                win.owner = rec.substr(0, first);
+
+                std::transform(std::begin(rec) + first, std::end(rec),
+                    std::begin(rec) + first,
+                    [](char c){ return (c != '\037' ? c : ' '); });
+                
+                std::stringstream ss(rec.substr(first));
+                int index(-1);
+
+                ss >> index >> win.bounds.x >> win.bounds.y
+                            >> win.bounds.w >> win.bounds.h;
+                if (ss.fail() == true || index < 0 ||
+                    win.bounds.w <= 0 || win.bounds.h <= 0)
+                {
+                    valid = false;
+                    break;
+                }
+
+                win.index = (std::size_t)index;
+                windows.emplace_back(std::move(win));
+            }
+            else
+            {
                 valid = false;
+                break;
+            }
         }
-        else
-            valid = false;
     }
 
-    // window_index, w, h
-    if (std::get<1>(b) < 0 || std::get<4>(b) <= 0 || std::get<5>(b) <= 0)
-        valid = false;
-
-    return std::make_pair(b, valid);
-}
-
-bool TileConfig::set_last_bounds(std::tuple<STR, int, int, int, int, int> b)
-{
-    verify(filename.empty() == false);
-
-    // window_index, w, h
-    bool success = (std::get<1>(b) >= 0 &&
-                    std::get<4>(b) > 0 && std::get<5>(b) > 0);
-    if (success == true)
-    {
-        success = set_value("last_bounds",
-                    std::get<0>(b) + '\037'
-                    + std::to_string(std::get<1>(b)) + '\037'
-                    + std::to_string(std::get<2>(b)) + '\037'
-                    + std::to_string(std::get<3>(b)) + '\037'
-                    + std::to_string(std::get<4>(b)) + '\037'
-                    + std::to_string(std::get<5>(b)) );
-    }
-    return success;
+    return std::make_pair(windows, valid); // RVO
 }

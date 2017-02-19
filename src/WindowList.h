@@ -8,18 +8,19 @@
 class WindowList
 {
 public:
-    void add_window(CSR owner, Window&& window);
+    void add_window(Bounds bounds, CSR owner, CSR title, unsigned int pid);
     
     // nullptr = failed to find or multiple app_name match
-    const std::pair<STR, std::vector<Window>>* find(CSR substr);
+    const std::pair<STR, std::vector<Window>>* find(CSR substr) const;
    
-    bool print(CSR substr); // false if failed
+    bool print(CSR substr) const; // false if failed
 
-    const std::vector<std::pair<STR, std::vector<Window>>>& get_vec();
+    const std::vector<Window>& get_vec() const;
 
 private:
-    // (owner, vec(window))
+    // map (owner, vec(window))
     std::vector<std::pair<STR, std::vector<Window>>> windows;
+    std::vector<Window> windows_ordered;
 };
 
 #endif /* WINDOWLIST_H_ */

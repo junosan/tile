@@ -2,27 +2,34 @@
 
 #include "format.h"
 
-void WindowList::add_window(CSR owner, Window&& window)
+void WindowList::add_window
+    (Bounds bounds, CSR owner, CSR title, unsigned int pid)
 {
+    Window window{bounds, owner, title, 0, pid}; // index filled below
+
     auto it  = std::begin(windows);
     auto end = std::end(windows);
     for (; it != end; ++it)
     {
         if (owner == it->first)
         {
-            it->second.emplace_back(std::move(window));
+            window.index = it->second.size();
+            it->second.emplace_back(window);
             break;
         }
     }
     if (it == end)
     {
         std::vector<Window> vec;
-        vec.emplace_back(std::move(window));
+        window.index = 0;
+        vec.emplace_back(window);
         windows.emplace_back(owner, std::move(vec));
     }
+
+    windows_ordered.emplace_back(std::move(window));
 }
 
-const std::pair<STR, std::vector<Window>>* WindowList::find(CSR substr)
+const std::pair<STR, std::vector<Window>>* WindowList::find(CSR substr) const
 {
     const std::pair<STR, std::vector<Window>>* pair_ptr = nullptr;
 
@@ -54,25 +61,20 @@ const std::pair<STR, std::vector<Window>>* WindowList::find(CSR substr)
     return pair_ptr;
 }
 
-bool WindowList::print(CSR substr)
+bool WindowList::print(CSR substr) const
 {
-    if (substr.empty() == true) // print all
+    if (substr.empty() == true) // print all, ordered
     {
-        for (const auto &owner_window : windows)
-        {
-            auto i = 0u;
-            for (const auto &window : owner_window.second)
-                std::cout << fmt_window(owner_window.first, i++, window);
-        }
+        for (const auto &window : windows_ordered)
+            std::cout << fmt_window(window);
     }
     else // print specified app
     {
         auto pair_ptr = find(substr);
         if (pair_ptr != nullptr)
         {
-            auto i = 0u;
             for (const auto &window : pair_ptr->second)
-                std::cout << fmt_window(pair_ptr->first, i++, window);
+                std::cout << fmt_window(window);
         }
         else
             return false;
@@ -80,7 +82,7 @@ bool WindowList::print(CSR substr)
     return true;
 }
 
-const std::vector<std::pair<STR, std::vector<Window>>>& WindowList::get_vec()
+const std::vector<Window>& WindowList::get_vec() const
 {
-    return windows;
+    return windows_ordered;
 }

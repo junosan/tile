@@ -61,8 +61,7 @@ std::pair<WindowList, DisplayList> build_lists(bool front_only)
 
         if (is_display == false)
         {
-            Window window{bounds, std::move(title), pid};
-            window_list.add_window(owner, std::move(window));
+            window_list.add_window(bounds, owner, title, pid);
             got_first = true;
         }
         else

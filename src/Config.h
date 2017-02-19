@@ -2,6 +2,7 @@
 #define CONFIG_H_
 
 #include "common.h"
+#include "Bounds.h"
 
 #include <fstream>
 #include <vector>
@@ -26,12 +27,10 @@ public:
     std::pair<int, bool> get_unit_width();
     //                    l    r    t    b
     std::pair<std::tuple<int, int, int, int>, bool> get_margins();
-    //                  name  idx   x    y    w    h
-    std::pair<std::tuple<STR, int, int, int, int, int>, bool> 
-        get_last_bounds();
-    //                             name  idx   x    y    w    h
-    bool set_last_bounds(std::tuple<STR, int, int, int, int, int> b);
 
+    // only using win.bounds, win.owner, win.index
+    bool set_last_bounds(const std::vector<Window> &windows);
+    std::pair<std::vector<Window>, bool> get_last_bounds();
 };
 
 #endif /* CONFIG_H_ */

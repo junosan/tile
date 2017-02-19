@@ -13,7 +13,44 @@ int Bounds::overlap_area(Bounds other) const
            overlap_len(y, h, other.y, other.h);
 }
 
-Bounds Bounds::h_sub(Bounds in, float unit, float l, float r)
+void Bounds::attach(Bounds other)
+{
+    int l = std::min(x, other.x);
+    int t = std::min(y, other.y);
+    int r = std::max(x + w, other.x + other.w);
+    int b = std::max(y + h, other.y + other.h);
+    std::tie(x, y, w, h) = std::make_tuple(l, t, r - l, b - t);
+}
+
+Bounds Bounds::snap(Bounds in, snap_dir dir) const
+{
+    switch (dir)
+    {
+        case snap_dir::l: in.x = x - in.w; break;
+        case snap_dir::r: in.x = x + w;    break;
+        case snap_dir::t: in.y = y - in.h; break;
+        case snap_dir::b: in.y = y + h;    break;
+        default: verify(false);
+    }
+    return in;
+}
+
+Bounds Bounds::fit(Bounds in) const
+{
+    auto fit_1d = [](int o1, int s1, int o2, int s2) {
+        o2 -= std::max(o2 + s2 - o1 - s1, 0);
+        o2 += std::max(o1 - o2, 0);
+        s2  = std::min(s1, s2);
+        return std::make_pair(o2, s2);
+    };
+
+    std::tie(in.x, in.w) = fit_1d(x, w, in.x, in.w);
+    std::tie(in.y, in.h) = fit_1d(y, h, in.y, in.h);
+
+    return in;
+}
+
+Bounds Bounds::h_sub(Bounds in, float unit, float l, float r) const
 {
     if (l != r || r < 0.f) // see comments in ArgParser::Args
     {
@@ -30,7 +67,7 @@ Bounds Bounds::h_sub(Bounds in, float unit, float l, float r)
     return in;
 }
 
-Bounds Bounds::v_sub(Bounds in, ArgParser::v_cmd v_cmd)
+Bounds Bounds::v_sub(Bounds in, ArgParser::v_cmd v_cmd) const
 {
     if (v_cmd != ArgParser::v_cmd::none)
     {
@@ -83,21 +120,6 @@ Bounds Bounds::v_sub(Bounds in, ArgParser::v_cmd v_cmd)
         in.y = y + rel_orig;
         in.h = rel_term - rel_orig;
     }
-
-    return in;
-}
-
-Bounds Bounds::fit(Bounds in)
-{
-    auto fit_1d = [](int o1, int s1, int o2, int s2) {
-        o2 -= std::max(o2 + s2 - o1 - s1, 0);
-        o2 += std::max(o1 - o2, 0);
-        s2  = std::min(s1, s2);
-        return std::make_pair(o2, s2);
-    };
-
-    std::tie(in.x, in.w) = fit_1d(x, w, in.x, in.w);
-    std::tie(in.y, in.h) = fit_1d(y, h, in.y, in.h);
 
     return in;
 }

@@ -10,8 +10,8 @@ ArgParser::Args ArgParser::parse(int argc, const char *argv[])
         return args;
 
     // store given or default values for arguments
-    STR arg1   = (argc > 1 ? STR(argv[1]) : STR(""));
-    STR substr = (argc > 2 ? STR(argv[2]) : STR(""));
+    STR arg1 = (argc > 1 ? STR(argv[1]) : STR(""));
+    STR arg2 = (argc > 2 ? STR(argv[2]) : STR(""));
 
     std::size_t index(0);
     if (argc > 3)
@@ -37,7 +37,7 @@ ArgParser::Args ArgParser::parse(int argc, const char *argv[])
     else if (argc <= 1 || (arg1 == "list" && argc < 4))
     {
         args.action = action::list;
-        args.substr = std::move(substr);
+        args.substr = std::move(arg2);
     }
 
     else if (argc == 2 && arg1 == "undo")
@@ -45,11 +45,31 @@ ArgParser::Args ArgParser::parse(int argc, const char *argv[])
         args.action = action::undo;
     }
 
+    else if (arg1 == "snap" && argc < 4)
+    {
+        args.index = 2;
+        if (argc == 3)
+        {
+            int i(-1);
+            try {
+                i = std::stoi(arg2);
+            } catch(...) {
+                return args;
+            }
+            if (i >= 2)
+                args.index = (std::size_t)i;
+            else
+                return args;
+        }
+
+        args.action = action::snap;
+    }
+
     else if (arg1 == "[" || arg1 == "]")
     {
         args.action = action::move;
         args.m_dir  = (arg1 == "[" ? m_dir::prev : m_dir::next);
-        args.substr = std::move(substr);
+        args.substr = std::move(arg2);
         args.index  = index;
     }
 
@@ -133,7 +153,7 @@ ArgParser::Args ArgParser::parse(int argc, const char *argv[])
         }
 
         args.action = action::tile;
-        args.substr = std::move(substr);
+        args.substr = std::move(arg2);
         args.index  = index;
     }
 
@@ -157,7 +177,15 @@ tile list [app_name] ([ ]: optional)
                 - if there are whitespaces, enclose app_name with '' or ""
                 - no-op if number of matches is not 1
         (none)  list currently opened app names and their windows
+                more recently focused app appears higher on the list
          name   list the named app's windows
+
+tile snap [count]
+    [count]     - take count windows from the top of 'tile list' and snap
+                  them side-by-side (horizontal movements only; no resize)
+                  with the most recently focused window as the pivot
+        (none)  equivalent to 2
+        number  number windows to be snapped together (>= 2)
 
 tile [command] [app_name] [window_index] (all positional arguments)
     [command] = [h_cmd][v_cmd]
@@ -187,7 +215,7 @@ tile [command] [app_name] [window_index] (all positional arguments)
         number      enumerated index in 'tile list' or 'tile list app_name'
 
 $HOME/.tilerc
-    unit_width      nonnegative integer (default: 570)
+    unit_width      positive integer (default: 570)
     margin_lrtb     integers for left, right, top, bottom (default: 0 0 0 0)
     last_bounds     not intended for human editing
 )USAGE_TEXT" << '\n';

@@ -77,34 +77,90 @@ int main(int argc, const char *argv[])
 
     if (args.action == ArgParser::action::undo)
     {
-        //        name  idx   x    y    w    h
-        std::tuple<STR, int, int, int, int, int> b;
-        bool valid;
-        std::tie(b, valid) = config.get_last_bounds();
+        auto wins_valid = config.get_last_bounds();
+        bool success(wins_valid.second);
 
-        if (valid == true)
+        if (success == true)
         {
-            valid = false;
             auto win_list = apple_api::build_lists().first;
-            auto pair_ptr = win_list.find(std::get<0>(b)); // life ~ win_list
+            std::vector<Window> old_wins;
 
-            if (pair_ptr != nullptr &&
-                std::get<1>(b) < pair_ptr->second.size())
+            for (const auto &new_win : wins_valid.first)
             {
-                const auto &win = pair_ptr->second[std::get<1>(b)];
-                valid = apple_api::apply_bounds(win, 
-                    Bounds{std::get<2>(b), std::get<3>(b),
-                           std::get<4>(b), std::get<5>(b)});
-                if (valid == true)
-                    config.set_last_bounds({pair_ptr->first, std::get<1>(b),
-                                            win.bounds.x, win.bounds.y,
-                                            win.bounds.w, win.bounds.h});
+                auto pair_ptr = win_list.find(new_win.owner);
+
+                if (pair_ptr != nullptr &&
+                    new_win.index < pair_ptr->second.size())
+                {
+                    const auto &win = pair_ptr->second[new_win.index];
+
+                    if (true == apple_api::apply_bounds(win, new_win.bounds))
+                        old_wins.emplace_back(win);
+                    else
+                        success = false;
+                }
+                else
+                    success = false;
             }
+
+            config.set_last_bounds(old_wins);
         }
 
-        if (valid == false)
+        if (success == false)
         {
-            std::cerr << "Undo failed\n";
+            std::cerr << "Undo failed or finished incompletely\n";
+            return clean_exit(1);
+        }
+
+        return clean_exit(0);
+    }
+
+    
+    if (args.action == ArgParser::action::snap)
+    {
+        auto win_disp = apple_api::build_lists();
+        win_disp.second.set_margins(margins);
+
+        const auto &windows = win_disp.first.get_vec(); 
+        auto n_win = std::min(args.index, windows.size());
+
+        if (n_win < 2)
+        {
+            std::cerr << "Cannot snap with only one window open\n";
+            return clean_exit(1);
+        }
+
+        Bounds blob(windows[0].bounds);
+        Bounds disp = win_disp.second.target_display(blob);
+
+        float pivot = blob.x + blob.w / 2.f;
+        
+        std::vector<Window> snapped_wins;
+        bool success(true);
+
+        for (auto i = 1u; i < n_win; ++i)
+        {
+            Bounds bounds = windows[i].bounds;
+            bounds = blob.snap(bounds, bounds.x + bounds.w / 2.f > pivot 
+                                ? Bounds::snap_dir::r : Bounds::snap_dir::l);
+            
+            if (disp.overlap_area(bounds) == 0)
+                continue;
+            
+            if (true == apple_api::apply_bounds(windows[i], bounds))
+            {
+                blob.attach(bounds);
+                snapped_wins.emplace_back(windows[i]);
+            }
+            else
+                success = false;
+        }
+
+        config.set_last_bounds(snapped_wins);
+
+        if (success == false)
+        {
+            std::cerr << "Snap failed or finished incompletely\n";
             return clean_exit(1);
         }
 
@@ -112,6 +168,7 @@ int main(int argc, const char *argv[])
     }
 
 
+    // for action::move & action::tile
     auto win_disp = (args.substr.empty() == true 
                         ? apple_api::build_lists(true)
                         : apple_api::build_lists());
@@ -159,9 +216,7 @@ int main(int argc, const char *argv[])
 
     if (true == apple_api::apply_bounds(win, bounds))
     {
-        config.set_last_bounds({pair_ptr->first, args.index,
-                                win.bounds.x, win.bounds.y,
-                                win.bounds.w, win.bounds.h});
+        config.set_last_bounds({1, win});
     }
     else
     {

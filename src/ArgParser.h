@@ -5,7 +5,7 @@
 
 class ArgParser {
 public:
-    enum class action { invalid, help, list, undo, move, tile };
+    enum class action { invalid, help, list, undo, snap, move, tile };
     enum class v_cmd  { none, f, t, b, y, h, n, j, k };
     enum class m_dir  { none, prev, next };
 
