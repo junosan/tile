@@ -17,8 +17,6 @@ cmd + lctrl - d : tile 2-4
 cmd + lctrl - q : tile 0-3
 cmd + lctrl - w : tile 1-4
 
-cmd + lctrl - 1 : tile 0-4
-
 cmd + lctrl - r : tile -
 
 # vertical tile presets
@@ -32,6 +30,7 @@ cmd + lctrl - j : tile j
 cmd + lctrl - k : tile k
 
 # snap presets
+cmd + lctrl - 1 : tile snap 1
 cmd + lctrl - 2 : tile snap 2
 cmd + lctrl - 3 : tile snap 3
 cmd + lctrl - 4 : tile snap 4

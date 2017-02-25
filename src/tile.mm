@@ -125,24 +125,31 @@ int main(int argc, const char *argv[])
         const auto &windows = win_disp.first.get_vec(); 
         auto n_win = std::min(args.index, windows.size());
 
-        if (n_win < 2)
+        if (n_win < 1)
         {
-            std::cerr << "Cannot snap with only one window open\n";
+            std::cerr << "No open windows to snap\n";
             return clean_exit(1);
         }
 
-        Bounds blob(windows[0].bounds);
+        Bounds blob(windows[0].bounds); // grows as more windows are attached
         Bounds disp = win_disp.second.target_display(blob);
 
-        float pivot = blob.x + blob.w / 2.f;
+        auto mid_x = [](Bounds b) { return (float)b.x + (float)b.w / 2.f; };
+
+        if (n_win == 1) // shift to just outside left or right edge
+            blob.x = disp.x + (mid_x(blob) > mid_x(disp) ? disp.w : -blob.w);
+
+        float pivot = mid_x(blob);
         
         std::vector<Window> snapped_wins;
         bool success(true);
 
-        for (auto i = 1u; i < n_win; ++i)
+        auto lb = (n_win > 1 ? 1u        : 0u);
+        auto ub = (n_win > 1 ? n_win - 1 : 0u);
+        for (auto i = lb; i <= ub; ++i)
         {
             Bounds bounds = windows[i].bounds;
-            bounds = blob.snap(bounds, bounds.x + bounds.w / 2.f > pivot 
+            bounds = blob.snap(bounds, mid_x(bounds) > pivot 
                                 ? Bounds::snap_dir::r : Bounds::snap_dir::l);
             
             if (disp.overlap_area(bounds) == 0)
