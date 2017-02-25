@@ -115,12 +115,13 @@ int main(int argc, const char *argv[])
         return clean_exit(0);
     }
 
-    
+    // snap, move, tile
+    auto win_disp = apple_api::build_lists();
+    win_disp.first.set_focused_app(apple_api::get_menu_bar_owner_pid());
+    win_disp.second.set_margins(margins);
+
     if (args.action == ArgParser::action::snap)
     {
-        auto win_disp = apple_api::build_lists();
-        win_disp.second.set_margins(margins);
-
         const auto &windows = win_disp.first.get_vec(); 
         auto n_win = std::min(args.index, windows.size());
 
@@ -168,12 +169,7 @@ int main(int argc, const char *argv[])
     }
 
 
-    // for action::move & action::tile
-    auto win_disp = (args.substr.empty() == true 
-                        ? apple_api::build_lists(true)
-                        : apple_api::build_lists());
-    win_disp.second.set_margins(margins);
-    
+    // move, tile
     auto pair_ptr = win_disp.first.find(args.substr); // life ~ win_disp.first
 
     if (pair_ptr == nullptr)

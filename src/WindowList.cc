@@ -3,7 +3,7 @@
 #include "format.h"
 
 void WindowList::add_window
-    (Bounds bounds, CSR owner, CSR title, unsigned int pid)
+    (Bounds bounds, CSR owner, CSR title, int pid)
 {
     Window window{bounds, owner, title, 0, pid}; // index filled below
 
@@ -29,8 +29,39 @@ void WindowList::add_window
     windows_ordered.emplace_back(std::move(window));
 }
 
+bool WindowList::set_focused_app(int pid)
+{
+    auto begin = std::begin(windows_ordered);
+    auto end = std::end(windows_ordered);
+    auto it_focused = begin;
+    for (; it_focused != end; ++it_focused)
+    {
+        if (it_focused->pid == pid)
+            break;
+    }
+
+    if (it_focused == end)
+        return false; // invalid call
+    
+    for (const auto &pair : windows)
+    {
+        if (pair.second[0].pid == pid)
+        {
+            focused_pair_ptr = &pair;
+            break;
+        }
+    }
+
+    windows_ordered.erase(begin, it_focused);
+
+    return true;
+}
+
 const std::pair<STR, std::vector<Window>>* WindowList::find(CSR substr) const
 {
+    if (substr.empty() == true && focused_pair_ptr != nullptr)
+        return focused_pair_ptr;
+
     const std::pair<STR, std::vector<Window>>* pair_ptr = nullptr;
 
     STR substr_l(substr);

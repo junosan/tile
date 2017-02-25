@@ -35,7 +35,7 @@ std::pair<WindowList, DisplayList> build_lists(bool front_only)
         if (owner == "Finder" && title.empty() == true) continue;
         
         bool is_display = (owner == "Window Server" && title == "Desktop");
-        unsigned int pid = [window[(id)kCGWindowOwnerPID] unsignedIntValue];
+        int pid = [window[(id)kCGWindowOwnerPID] intValue];
         
         if (is_display == false)
         {
@@ -147,6 +147,19 @@ bool apply_bounds(const Window &window, Bounds bounds)
         CFRelease(window_arr);
     
     return success;
+}
+
+int get_menu_bar_owner_pid()
+{
+    for (NSRunningApplication *app in
+        [[NSWorkspace sharedWorkspace] runningApplications])
+    {
+        if ([app activationPolicy] == NSApplicationActivationPolicyRegular
+         && [app ownsMenuBar])
+            return [app processIdentifier];
+    }
+
+    return 0;
 }
 
 }

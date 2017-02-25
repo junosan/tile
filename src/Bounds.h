@@ -28,7 +28,7 @@ struct Window
     STR owner;
     STR title;
     std::size_t index;
-    unsigned int pid;
+    int pid;
 };
 
 #endif /* BOUNDS_H_ */

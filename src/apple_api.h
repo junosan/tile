@@ -13,6 +13,8 @@ extern
     std::pair<WindowList, DisplayList> build_lists(bool front_only = false);
 extern
     bool apply_bounds(const Window &window, Bounds bounds); // true if success
+extern
+    int get_menu_bar_owner_pid();
 
 }
 
