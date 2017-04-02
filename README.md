@@ -4,17 +4,17 @@
 `tile` is a command-line window manipulation tool for macOS.
 
 Features:
-- Address apps by case insensitive substring of their names
-  (e.g., `s` for *Safari*, `i` for *iTunes*, etc.),
-  or, if no name is provided, act on the currently focused window
 - Manipulate windows within one display, or send them to other displays
+- Snap last *n* focused windows together side-by-side with the most recently
+  focused one as the pivot
 - Horizontal and vertical dimensions are treated differently
   - Horizontal: position and width addressed in terms of `unit_width`
     (defaults to `Terminal.app`'s width at 80 columns without scrollbar)
   - Vertical: position and height set with multiples of halves or thirds of
     display height
-- Snap last *n* focused windows together side-by-side with the most recently
-  focused one as the pivot
+- Address apps by case insensitive substring of their names
+  (e.g., `s` for *Safari*, `i` for *iTunes*, etc.),
+  or, if no name is provided, act on the currently focused window
 - Integrate with hotkey managers that issue shell commands such as
   [khd](https://github.com/koekeishiya/khd);
   sample config file for *khd* is provided in `readme/.khdrc`, which results

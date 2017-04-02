@@ -1,9 +1,5 @@
 # tile keybinds for khd
 
-# Note: when ctrl is pressed & mouse is inside Safari, it spawns
-#       a mini pop-up in the corner which interferes with tile;
-#       keep mouse out of Safari when manipulating it
-
 # horizontal tile presets
 cmd + lctrl - z : tile 0-1
 cmd + lctrl - x : tile 1-2
