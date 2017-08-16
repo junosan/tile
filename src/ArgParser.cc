@@ -47,7 +47,7 @@ ArgParser::Args ArgParser::parse(int argc, const char *argv[])
 
     else if (arg1 == "snap" && argc < 4)
     {
-        args.index = 1;
+        args.index = 1; // default value
         if (argc == 3)
         {
             int i(-1);
@@ -56,7 +56,7 @@ ArgParser::Args ArgParser::parse(int argc, const char *argv[])
             } catch(...) {
                 return args;
             }
-            if (i >= 1)
+            if (i >= 0) // minimum value
                 args.index = (std::size_t)i;
             else
                 return args;
@@ -184,9 +184,10 @@ tile snap [count]
     [count]     - take count windows from the top of 'tile list' and snap
                   them side-by-side (horizontal movements only; no resize)
                   with the most recently focused window as the pivot
-                - if count is 1, snaps the window to the closest display edge
+                - if count is 1, snaps the pivot to the closest display edge
+                - if count is 0, snaps the pivot to the center of its display
         (none)  equivalent to 1
-        number  number windows to be snapped together (>= 1)
+        number  number windows to be snapped together (>= 0)
 
 tile [command] [app_name] [window_index] (all positional arguments)
     [command] = [h_cmd][v_cmd]

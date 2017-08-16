@@ -26,6 +26,7 @@ cmd + lctrl - j : tile j
 cmd + lctrl - k : tile k
 
 # snap presets
+cmd + lctrl - 0 : tile snap 0
 cmd + lctrl - 1 : tile snap 1
 cmd + lctrl - 2 : tile snap 2
 cmd + lctrl - 3 : tile snap 3

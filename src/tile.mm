@@ -123,18 +123,22 @@ int main(int argc, const char *argv[])
     if (args.action == ArgParser::action::snap)
     {
         const auto &windows = win_disp.first.get_vec(); 
-        auto n_win = std::min(args.index, windows.size());
-
-        if (n_win < 1)
+        if (windows.empty() == true)
         {
             std::cerr << "No open windows to snap\n";
             return clean_exit(1);
         }
 
+        auto n_win = std::min(args.index, windows.size());
+
         Bounds blob(windows[0].bounds); // grows as more windows are attached
         Bounds disp = win_disp.second.target_display(blob);
 
         auto mid_x = [](Bounds b) { return (float)b.x + (float)b.w / 2.f; };
+
+        if (n_win == 0) // shift to left or right side of to-be-centered window
+            blob.x = mid_x(disp) +
+                     (mid_x(blob) > mid_x(disp) ? -1.5f : 0.5f) * blob.w;
 
         if (n_win == 1) // shift to just outside left or right edge
             blob.x = disp.x + (mid_x(blob) > mid_x(disp) ? disp.w : -blob.w);
