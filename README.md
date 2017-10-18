@@ -3,22 +3,21 @@
 
 `tile` is a command-line window manipulation tool for macOS.
 
-Features:
-- Manipulate windows within one display, or send them to other displays
-- Snap last *n* focused windows together side-by-side with the most recently
-  focused one as the pivot
 - Horizontal and vertical dimensions are treated differently
-  - Horizontal: position and width addressed in terms of `unit_width`
-    (defaults to `Terminal.app`'s width at 80 columns without scrollbar)
-  - Vertical: position and height set with multiples of halves or thirds of
-    display height
-- Address apps by case insensitive substring of their names
-  (e.g., `s` for *Safari*, `i` for *iTunes*, etc.),
-  or, if no name is provided, act on the currently focused window
+  - Horizontal: (possibly non-integer) multiples of fixed `unit_width`
+    - Defaults to `Terminal.app`'s width at 80 columns, with scrollbar hidden
+  - Vertical: integer multiples of halves or thirds of display height
+- Snap
+  - Snap to the display center or edge
+  - Snap last *n* focused windows together side-by-side
+- Manipulate windows within one display, or send them to other displays
+- Address apps by case insensitive substrings of their names
+  (e.g., `s` for *Safari*, `i` for *iTunes*, etc.)
+  - If no name is provided, act on the currently focused window
 - Integrate with hotkey managers that issue shell commands such as
-  [khd](https://github.com/koekeishiya/khd);
-  sample config file for *khd* is provided in `readme/.khdrc`, which results
-  in the following keybinds (prefix ^⌘):
+  [khd](https://github.com/koekeishiya/khd)
+  - Sample config file for *khd* is provided in `readme/.khdrc`, which results
+    in the following keybinds (prefix right ⌥⌘):
 
 ![keybinds](readme/keybinds.png)
 
