@@ -13,7 +13,7 @@ ArgParser::Args ArgParser::parse(int argc, const char *argv[])
     STR arg1 = (argc > 1 ? STR(argv[1]) : STR(""));
     STR arg2 = (argc > 2 ? STR(argv[2]) : STR(""));
 
-    std::size_t index(0);
+    long index(0);
     if (argc > 3)
     {
         int i(-1);
@@ -23,7 +23,7 @@ ArgParser::Args ArgParser::parse(int argc, const char *argv[])
             return args;
         }
         if (i >= 0)
-            index = (std::size_t)i;
+            index = i;
         else
             return args;
     }
@@ -56,8 +56,8 @@ ArgParser::Args ArgParser::parse(int argc, const char *argv[])
             } catch(...) {
                 return args;
             }
-            if (i >= 0) // minimum value
-                args.index = (std::size_t)i;
+            if (i >= -1) // minimum value
+                args.index = i;
             else
                 return args;
         }
@@ -184,8 +184,9 @@ tile snap [count]
     [count]     - take count windows from the top of 'tile list' and snap
                   them side-by-side (horizontal movements only; no resize)
                   with the most recently focused window as the pivot
-                - if count is 1, snaps the pivot to the closest display edge
+                - if count is 1, snaps the pivot to the left display edge
                 - if count is 0, snaps the pivot to the center of its display
+                - if count is -1, snaps the pivot to the right display edge
         (none)  equivalent to 1
         number  number windows to be snapped together (>= 0)
 

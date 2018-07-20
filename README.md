@@ -36,7 +36,7 @@
                     app whose name starts with `sa` (e.g., *Safari*)
   - `tile -2.5t fi 1`: position same, width extended to position 2.5,
                        top half, 1-th window of app `fi` (e.g., *Finder*)
-  - `tile snap`: snap current window to the closest display edge (left/right)
+  - `tile snap`: snap current window to the left display edge
   - `tile snap 3`: snap last 3 focused windows together side-by-side
   - `tile undo`: undo last action
   - `tile [` or `tile ]`: send current window to previous or next display

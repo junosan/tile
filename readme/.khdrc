@@ -32,6 +32,7 @@ rcmd + ralt - 1    : tile snap 1
 rcmd + ralt - 2    : tile snap 2
 rcmd + ralt - 3    : tile snap 3
 rcmd + ralt - 4    : tile snap 4
+rcmd + ralt - 0    : tile snap -1
 
 # move between multiple displays
 rcmd + ralt - 0x21 : tile [

@@ -25,7 +25,7 @@ public:
         m_dir m_dir;
 
         STR substr;
-        std::size_t index;
+        long index;
 
         Args() : action{action::invalid},
                 h_cmd{0.f, 0.f}, v_cmd{v_cmd::none}, m_dir{m_dir::none},
