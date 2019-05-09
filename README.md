@@ -15,8 +15,8 @@
   (e.g., `s` for *Safari*, `i` for *iTunes*, etc.)
   - If no name is provided, act on the currently focused window
 - Integrate with hotkey managers that issue shell commands such as
-  [khd](https://github.com/koekeishiya/khd)
-  - Sample config file for *khd* is provided in `readme/.khdrc`, which results
+  [skhd](https://github.com/koekeishiya/skhd)
+  - Sample config file for *skhd* is provided in `readme/.skhdrc`, which results
     in the following keybinds (prefix right ⌥⌘):
 
 ![keybinds](readme/keybinds.png)
