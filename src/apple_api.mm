@@ -34,7 +34,8 @@ std::pair<WindowList, DisplayList> build_lists(bool front_only)
         if (owner == "Dock") continue;
         if (owner == "Finder" && title.empty() == true) continue;
         
-        bool is_display = (owner == "Window Server" && title == "Desktop");
+        // Note: macOS 10.15 disabled kCGWindowName (returns blank)
+        bool is_display = (owner == "Window Server"); //&& title == "Desktop");
         int pid = [window[(id)kCGWindowOwnerPID] intValue];
         
         if (is_display == false)
@@ -118,8 +119,9 @@ bool apply_bounds(const Window &window, Bounds bounds)
         STR title(title_c_str != NULL ? title_c_str : "");
         CFRelease(v);
 
-        if (title != window.title)
-            continue;
+        // Note: macOS 10.15 no longer allows querying window titles
+        // if (title != window.title)
+        //     continue;
 
         if (window.bounds.x != bounds.x || window.bounds.y != bounds.y)
         {
